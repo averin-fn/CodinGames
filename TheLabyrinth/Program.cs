@@ -82,7 +82,7 @@ class Player
         {
             return GetDirection(from, p);
         }
-        throw new Exception(string.Format("From: {0} - To: {1}", from, to));
+        throw new Exception(string.Format("Faild to get direction. From: {0} - To: {1}", from, to));
     }
 
     static bool TryMove(Point from, Point to)
@@ -117,7 +117,7 @@ class Player
             return;
         }
 
-        //move next if current point length < number of rounds
+        // move next if current point length < number of rounds
         if (Values[current.X, current.Y] <= A)
         {
             if (TryMove(current, new Point(current.X + 1, current.Y))) return;
@@ -128,12 +128,12 @@ class Player
 
         if (Steps.TryPop(out Point p))
         {
-            //Move back
+            // move back
             WriteLine(GetDirection(current, p, true));
             return;
         }
 
-        throw new Exception("stack is empty");
+        throw new Exception("Kirck can't move");
     }
 
     static bool CheckMin(Point point, int min)
@@ -141,7 +141,7 @@ class Player
         return Values[point.X, point.Y] != 0 && Values[point.X, point.Y] < min;
     }
 
-    //Find min around the current point
+    // find min around the current point
     static Tuple<Point, int> FindMin(Point current)
     {
         Point p = new Point();
@@ -170,7 +170,7 @@ class Player
 
         if(min == 1000)
         {
-            throw new Exception("Min value not found.");
+            throw new Exception("min value not found.");
         }
         
         return Tuple.Create(p, min);
