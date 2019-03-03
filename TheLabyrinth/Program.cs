@@ -50,8 +50,6 @@ class Player
 
             Point KP = new Point(KC, KR); // Kirck point
 
-            Steps.Push(KP);
-
             for (int y = 0; y < R; y++)
             {
                 string ROW = ReadLine(); // C of the characters in '#.TC?' (i.e. one line of the ASCII maze).
@@ -71,27 +69,31 @@ class Player
         }
     }
 
-    static Direction GetDirection(Point from, Point to)
+    static Direction GetDirection(Point from, Point to, bool back = false)
     {
+        if (!back) Steps.Push(to);
+
         if (to.Y > from.Y) return Direction.DOWN;
         if (to.Y < from.Y) return Direction.UP;
         if (to.X > from.X) return Direction.RIGHT;
         if (to.X < from.X) return Direction.LEFT;
-        
-        if (Steps.TryPop(out Point p)) // if from == to try pop again
-        {   
+
+        if (Steps.TryPop(out Point p))
+        {
             return GetDirection(from, p);
         }
-
-        throw new Exception("from == to and stack is empty");
+        throw new Exception(string.Format("From: {0} - To: {1}", from, to));
     }
 
-    static bool CheckMove(Point from, Point to)
+    static bool TryMove(Point from, Point to)
     {
         if (Map[to.X, to.Y] != '#')
         {
             if (Values[to.X, to.Y] == 0 || Values[to.X, to.Y] > Values[from.X, from.Y] + 1)
             {
+                // find min around current point and set next step value
+                Values[to.X, to.Y] = FindMin(new Point(to.X, to.Y)).Item2 + 1;
+                WriteLine(GetDirection(from, new Point(to.X, to.Y))); // move
                 return true;
             }
         }
@@ -118,35 +120,20 @@ class Player
         //move next if current point length < number of rounds
         if (Values[current.X, current.Y] <= A)
         {
-            if (CheckMove(current, new Point(current.X + 1, current.Y)))
-            {
-                // find min around current point and set next step value
-                Values[current.X + 1, current.Y] = FindMin(new Point(current.X + 1, current.Y)).Item2 + 1; 
-                WriteLine(GetDirection(current, new Point(current.X + 1, current.Y))); // move
-                return;
-            }
-            if (CheckMove(current, new Point(current.X - 1, current.Y)))
-            {
-                Values[current.X - 1, current.Y] = FindMin(new Point(current.X - 1, current.Y)).Item2 + 1;
-                WriteLine(GetDirection(current, new Point(current.X - 1, current.Y)));
-                return;
-            }
-            if (CheckMove(current, new Point(current.X, current.Y + 1)))
-            {
-                Values[current.X, current.Y + 1] = FindMin(new Point(current.X, current.Y + 1)).Item2 + 1;
-                WriteLine(GetDirection(current, new Point(current.X, current.Y + 1)));
-                return;
-            }
-            if (CheckMove(current, new Point(current.X, current.Y - 1)))
-            {
-                Values[current.X, current.Y - 1] = FindMin(new Point(current.X, current.Y - 1)).Item2 + 1;
-                WriteLine(GetDirection(current, new Point(current.X, current.Y - 1)));
-                return;
-            }
+            if (TryMove(current, new Point(current.X + 1, current.Y))) return;
+            if (TryMove(current, new Point(current.X - 1, current.Y))) return;
+            if (TryMove(current, new Point(current.X, current.Y + 1))) return;
+            if (TryMove(current, new Point(current.X, current.Y - 1))) return;
         }
 
-        //Move back
-        WriteLine(GetDirection(current, Steps.Pop()));
+        if (Steps.TryPop(out Point p))
+        {
+            //Move back
+            WriteLine(GetDirection(current, p, true));
+            return;
+        }
+
+        throw new Exception("stack is empty");
     }
 
     static bool CheckMin(Point point, int min)
@@ -185,7 +172,7 @@ class Player
         {
             throw new Exception("Min value not found.");
         }
-
+        
         return Tuple.Create(p, min);
     }
 }
