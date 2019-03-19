@@ -6,8 +6,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 
-using static System.Console;
-
 /**
  * Auto-generated code below aims at helping you parse
  * the standard input according to the problem statement.
@@ -32,19 +30,19 @@ class Player
     static void Main(string[] args)
     {
         string[] inputs;
-        inputs = ReadLine().Split(' ');
+        inputs = Console.ReadLine().Split(' ');
         R = int.Parse(inputs[0]); // number of rows.
         C = int.Parse(inputs[1]); // number of columns.
         A = int.Parse(inputs[2]); // number of rounds between the time the alarm countdown is activated and the time the alarm goes off.
 
         // invert array for Point(X, Y) work
-        Map = new char[C, R]; 
+        Map = new char[C, R];
         Values = new int[C, R];
 
         // game loop
         while (true)
         {
-            inputs = ReadLine().Split(' ');
+            inputs = Console.ReadLine().Split(' ');
             int KR = int.Parse(inputs[0]); // row where Kirk is located.
             int KC = int.Parse(inputs[1]); // column where Kirk is located.
 
@@ -52,7 +50,7 @@ class Player
 
             for (int y = 0; y < R; y++)
             {
-                string ROW = ReadLine(); // C of the characters in '#.TC?' (i.e. one line of the ASCII maze).
+                string ROW = Console.ReadLine(); // C of the characters in '#.TC?' (i.e. one line of the ASCII maze).
 
                 for (int x = 0; x < C; x++)
                 {
@@ -69,19 +67,13 @@ class Player
         }
     }
 
-    static Direction GetDirection(Point from, Point to, bool back = false)
+    static Direction GetDirection(Point from, Point to)
     {
-        if (!back) Steps.Push(to);
-
         if (to.Y > from.Y) return Direction.DOWN;
         if (to.Y < from.Y) return Direction.UP;
         if (to.X > from.X) return Direction.RIGHT;
         if (to.X < from.X) return Direction.LEFT;
 
-        if (Steps.TryPop(out Point p))
-        {
-            return GetDirection(from, p);
-        }
         throw new Exception(string.Format("Faild to get direction. From: {0} - To: {1}", from, to));
     }
 
@@ -92,8 +84,9 @@ class Player
             if (Values[to.X, to.Y] == 0 || Values[to.X, to.Y] > Values[from.X, from.Y] + 1)
             {
                 // find min around current point and set next step value
-                Values[to.X, to.Y] = FindMin(new Point(to.X, to.Y)).Item2 + 1;
-                WriteLine(GetDirection(from, new Point(to.X, to.Y))); // move
+                Values[to.X, to.Y] = FindMin(new Point(to.X, to.Y)).min + 1;
+                Console.WriteLine(GetDirection(from, new Point(to.X, to.Y))); // move
+                Steps.Push(from); // add step
                 return true;
             }
         }
@@ -107,13 +100,12 @@ class Player
         // set start value
         if (Values[current.X, current.Y] == 0)
         {
-            Steps.Push(current);
             Values[current.X, current.Y] = 1;
         }
 
         if (IsTimer)
         {
-            WriteLine(GetDirection(current, FindMin(current).Item1));
+            Console.WriteLine(GetDirection(current, FindMin(current).point));
             return;
         }
 
@@ -126,26 +118,26 @@ class Player
             if (TryMove(current, new Point(current.X, current.Y - 1))) return;
         }
 
+        // move back
         if (Steps.TryPop(out Point p))
         {
-            // move back
-            WriteLine(GetDirection(current, p, true));
+            Console.WriteLine(GetDirection(current, p));
             return;
         }
 
         throw new Exception("Kirck can't move");
     }
 
-    static bool CheckMin(Point point, int min)
+    static bool CheckMin(Point point, int? min)
     {
-        return Values[point.X, point.Y] != 0 && Values[point.X, point.Y] < min;
+        return (Values[point.X, point.Y] != 0 && (!min.HasValue || Values[point.X, point.Y] < min));
     }
 
     // find min around the current point
-    static Tuple<Point, int> FindMin(Point current)
+    static (Point point, int min) FindMin(Point current)
     {
         Point p = new Point();
-        var min = 1000;
+        int? min = null;
 
         if (CheckMin(new Point(current.X + 1, current.Y), min))
         {
@@ -168,11 +160,11 @@ class Player
             p = new Point(current.X, current.Y - 1);
         }
 
-        if(min == 1000)
+        if (!min.HasValue)
         {
             throw new Exception("min value not found.");
         }
-        
-        return Tuple.Create(p, min);
+
+        return (p, min.Value);
     }
 }
